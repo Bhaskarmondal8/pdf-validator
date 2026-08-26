@@ -2,12 +2,20 @@ const express = require('express');
 const multer = require('multer');
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(cors());
-app.use(express.static('public'));
+
+// public ফোল্ডারের ভেতরের ফাইল চেনার জন্য
+app.use(express.static(path.join(__dirname, 'public')));
+
+// হোম পেজে ঢুকলে index.html ফাইল দেখাবে
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 app.post('/validate-pdf', upload.single('pdf'), async (req, res) => {
     try {
