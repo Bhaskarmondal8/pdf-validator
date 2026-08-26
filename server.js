@@ -9,12 +9,12 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(cors());
 
-// public ফোল্ডারের ভেতরের ফাইল চেনার জন্য
-app.use(express.static(path.join(__dirname, 'public')));
+// সরাসরি Root Directory থেকে স্ট্যাটিক ফাইল লোড করার জন্য
+app.use(express.static(__dirname));
 
-// হোম পেজে ঢুকলে index.html ফাইল দেখাবে
+// মূল লিংকে ঢুকলে index.html ফাইলটি দেখাবে
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.post('/validate-pdf', upload.single('pdf'), async (req, res) => {
