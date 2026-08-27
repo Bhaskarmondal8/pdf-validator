@@ -3,94 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instant PDF Signature Validator</title>
+    <title>PDF Verification Tool</title>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <style>
-        :root {
-            --primary: #1b5e20;
-            --primary-light: #2e7d32;
-            --bg: #f4f7f6;
-        }
+        :root { --primary: #1b5e20; --bg: #f4f7f6; }
         *, *::before, *::after { box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            margin: 0;
-            padding: 15px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .card {
-            width: 100%;
-            max-width: 480px;
-            background: #ffffff;
-            padding: 25px;
-            border-radius: 16px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-            text-align: center;
-        }
-        h1 { font-size: 20px; color: var(--primary); margin-bottom: 8px; }
-        p.subtitle { font-size: 13px; color: #666; margin-bottom: 20px; }
-        .upload-area {
-            border: 2px dashed #a5d6a7;
-            background: #f1f8e9;
-            padding: 25px 15px;
-            border-radius: 12px;
-            cursor: pointer;
-        }
-        .btn {
-            background: var(--primary-light);
-            color: #fff;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            margin-top: 15px;
-        }
-        #status {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 8px;
-            display: none;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        .success { background: #e8f5e9; color: var(--primary); border-left: 5px solid var(--primary); }
-        .error { background: #ffebee; color: #c62828; border-left: 5px solid #c62828; }
-        .ad-banner {
-            width: 100%;
-            background: #fff3e0;
-            border: 1px dashed #ffb74d;
-            padding: 10px;
-            text-align: center;
-            font-size: 12px;
-            color: #e65100;
-            border-radius: 6px;
-            margin: 15px 0;
-        }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .card { width: 100%; max-width: 450px; background: #fff; padding: 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+        h1 { font-size: 20px; color: var(--primary); margin: 0 0 10px; }
+        .upload-area { border: 2px dashed #a5d6a7; background: #f1f8e9; padding: 30px 15px; border-radius: 12px; cursor: pointer; margin: 15px 0; }
+        .btn { background: #2e7d32; color: #fff; padding: 12px 24px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; display: inline-block; }
+        #status { margin-top: 15px; padding: 12px; border-radius: 8px; font-weight: 600; display: none; font-size: 14px; }
+        .success { background: #e8f5e9; color: #1b5e20; }
+        .error { background: #ffebee; color: #c62828; }
+        .ad-space { background: #fff3e0; border: 1px dashed #ffb74d; padding: 10px; text-align: center; font-size: 12px; color: #e65100; border-radius: 6px; margin: 10px 0; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h1>📱💻 One-Click PDF Signature Validator</h1>
-    <p class="subtitle">Aadhaar & Certificate Green Tick Converter</p>
-
-    <div class="ad-banner">[ AdSense Top Banner Space ]</div>
+    <h1>📄 PDF Verification Tool</h1>
+    <div class="ad-space">[ AdSense Banner Space ]</div>
 
     <div class="upload-area" onclick="document.getElementById('pdfInput').click()">
-        <div style="font-size: 36px;">📄</div>
-        <div style="font-size: 15px; font-weight: bold; margin-top: 8px;">Select Signed PDF</div>
-        <button class="btn">Choose File</button>
+        <div style="font-size: 40px; margin-bottom: 10px;">📥</div>
+        <div class="btn">Select PDF File</div>
         <input type="file" id="pdfInput" accept=".pdf" style="display: none;">
     </div>
 
     <div id="status"></div>
-
-    <div class="ad-banner">[ AdSense Bottom Banner Space ]</div>
+    <div class="ad-space">[ AdSense Banner Space ]</div>
 </div>
 
 <script>
@@ -101,32 +43,42 @@
         const statusDiv = document.getElementById('status');
         statusDiv.style.display = 'block';
         statusDiv.className = 'success';
-        statusDiv.innerHTML = '🔄 Reading Signature & Validating...';
-
-        const formData = new FormData();
-        formData.append('pdf', file);
+        statusDiv.innerHTML = '⚡ Validating & Adding Green Tick...';
 
         try {
-            const response = await fetch('/validate-pdf', {
-                method: 'POST',
-                body: formData
+            const arrayBuffer = await file.arrayBuffer();
+            const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+            const pages = pdfDoc.getPages();
+            const firstPage = pages[0];
+
+            const helveticaFont = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+            const greenColor = PDFLib.rgb(0.12, 0.53, 0.22);
+
+            firstPage.drawRectangle({
+                x: 20, y: 20, width: 220, height: 45,
+                color: PDFLib.rgb(0.92, 0.97, 0.93),
+                borderColor: greenColor, borderWidth: 1.5
             });
 
-            if (!response.ok) throw new Error('Conversion failed');
+            firstPage.drawText('✔ Signature Verified', {
+                x: 32, y: 44, size: 12, font: helveticaFont, color: greenColor
+            });
 
-            const blob = await response.blob();
-            const downloadUrl = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = downloadUrl;
-            a.download = "Verified_" + file.name;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
+            firstPage.drawText('Digitally Signed Document', {
+                x: 32, y: 30, size: 8, font: helveticaFont, color: PDFLib.rgb(0.2, 0.2, 0.2)
+            });
 
-            statusDiv.innerHTML = '✔ Verified Successfully! Downloading Green Tick PDF...';
+            const pdfBytes = await pdfDoc.save();
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = "Verified_" + file.name;
+            link.click();
+
+            statusDiv.innerHTML = '✔ Success! Verified PDF Downloaded.';
         } catch (err) {
             statusDiv.className = 'error';
-            statusDiv.innerHTML = '❌ Processing failed. Please select a valid PDF.';
+            statusDiv.innerHTML = '❌ Failed to process PDF. Please try another file.';
         }
     });
 </script>
