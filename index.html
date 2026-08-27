@@ -1,38 +1,40 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Verification Tool</title>
-    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <title>PDF Verification Portal</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
     <style>
-        :root { --primary: #1b5e20; --bg: #f4f7f6; }
-        *, *::before, *::after { box-sizing: border-box; }
-        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .card { width: 100%; max-width: 450px; background: #fff; padding: 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
-        h1 { font-size: 20px; color: var(--primary); margin: 0 0 10px; }
-        .upload-area { border: 2px dashed #a5d6a7; background: #f1f8e9; padding: 30px 15px; border-radius: 12px; cursor: pointer; margin: 15px 0; }
-        .btn { background: #2e7d32; color: #fff; padding: 12px 24px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; display: inline-block; }
-        #status { margin-top: 15px; padding: 12px; border-radius: 8px; font-weight: 600; display: none; font-size: 14px; }
-        .success { background: #e8f5e9; color: #1b5e20; }
-        .error { background: #ffebee; color: #c62828; }
-        .ad-space { background: #fff3e0; border: 1px dashed #ffb74d; padding: 10px; text-align: center; font-size: 12px; color: #e65100; border-radius: 6px; margin: 10px 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f3f4f6; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 420px; text-align: center; }
+        h2 { color: #166534; margin-bottom: 8px; font-size: 22px; }
+        p { color: #4b5563; font-size: 14px; margin-bottom: 20px; }
+        .upload-btn { background-color: #15803d; color: white; padding: 14px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-block; border: none; width: 100%; font-size: 16px; transition: 0.2s; }
+        .upload-btn:hover { background-color: #166534; }
+        #pdfInput { display: none; }
+        #status { margin-top: 18px; padding: 12px; border-radius: 6px; font-weight: 600; font-size: 14px; display: none; }
+        .info { background-color: #e0f2fe; color: #0369a1; }
+        .success { background-color: #dcfce7; color: #15803d; }
+        .error { background-color: #fee2e2; color: #b91c1c; }
+        .ad-container { border: 1px dashed #d1d5db; background: #fafafa; margin: 15px 0; padding: 10px; border-radius: 6px; font-size: 11px; color: #9ca3af; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h1>📄 PDF Verification Tool</h1>
-    <div class="ad-space">[ AdSense Banner Space ]</div>
+<div class="box">
+    <h2>📄 PDF Signature Verification</h2>
+    <p>Upload your PDF to attach Verified Stamp</p>
 
-    <div class="upload-area" onclick="document.getElementById('pdfInput').click()">
-        <div style="font-size: 40px; margin-bottom: 10px;">📥</div>
-        <div class="btn">Select PDF File</div>
-        <input type="file" id="pdfInput" accept=".pdf" style="display: none;">
-    </div>
+    <div class="ad-container">AdSense Banner Ad</div>
+
+    <label for="pdfInput" class="upload-btn">📂 Choose PDF File</label>
+    <input type="file" id="pdfInput" accept="application/pdf">
 
     <div id="status"></div>
-    <div class="ad-space">[ AdSense Banner Space ]</div>
+
+    <div class="ad-container">AdSense Banner Ad</div>
 </div>
 
 <script>
@@ -40,45 +42,69 @@
         const file = e.target.files[0];
         if (!file) return;
 
-        const statusDiv = document.getElementById('status');
-        statusDiv.style.display = 'block';
-        statusDiv.className = 'success';
-        statusDiv.innerHTML = '⚡ Validating & Adding Green Tick...';
+        const status = document.getElementById('status');
+        status.style.display = 'block';
+        status.className = 'info';
+        status.innerText = '⏳ Verifying Document...';
 
         try {
-            const arrayBuffer = await file.arrayBuffer();
-            const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+            const fileArrayBuffer = await file.arrayBuffer();
+            const PDFLibObj = window.PDFLib || PDFLib;
+            
+            const pdfDoc = await PDFLibObj.PDFDocument.load(fileArrayBuffer, { ignoreEncryption: true });
             const pages = pdfDoc.getPages();
-            const firstPage = pages[0];
+            
+            if (pages.length === 0) {
+                throw new Error("Empty PDF");
+            }
 
-            const helveticaFont = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
-            const greenColor = PDFLib.rgb(0.12, 0.53, 0.22);
+            const firstPage = pages[0];
+            const font = await pdfDoc.embedFont(PDFLibObj.StandardFonts.HelveticaBold);
+            const greenColor = PDFLibObj.rgb(0.08, 0.5, 0.24);
 
             firstPage.drawRectangle({
-                x: 20, y: 20, width: 220, height: 45,
-                color: PDFLib.rgb(0.92, 0.97, 0.93),
-                borderColor: greenColor, borderWidth: 1.5
+                x: 20,
+                y: 20,
+                width: 210,
+                height: 42,
+                color: PDFLibObj.rgb(0.93, 0.98, 0.94),
+                borderColor: greenColor,
+                borderWidth: 1.5,
             });
 
-            firstPage.drawText('✔ Signature Verified', {
-                x: 32, y: 44, size: 12, font: helveticaFont, color: greenColor
+            firstPage.drawText('✔ Digitally Verified', {
+                x: 30,
+                y: 44,
+                size: 11,
+                font: font,
+                color: greenColor,
             });
 
-            firstPage.drawText('Digitally Signed Document', {
-                x: 32, y: 30, size: 8, font: helveticaFont, color: PDFLib.rgb(0.2, 0.2, 0.2)
+            firstPage.drawText('Signature & Document Validated', {
+                x: 30,
+                y: 30,
+                size: 8,
+                font: font,
+                color: PDFLibObj.rgb(0.2, 0.2, 0.2),
             });
 
             const pdfBytes = await pdfDoc.save();
             const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = "Verified_" + file.name;
+            document.body.appendChild(link);
             link.click();
+            document.body.removeChild(link);
 
-            statusDiv.innerHTML = '✔ Success! Verified PDF Downloaded.';
+            status.className = 'success';
+            status.innerText = '✔ Success! Verified PDF Downloaded.';
+
         } catch (err) {
-            statusDiv.className = 'error';
-            statusDiv.innerHTML = '❌ Failed to process PDF. Please try another file.';
+            console.error(err);
+            status.className = 'error';
+            status.innerText = '❌ Failed to process PDF. Try another PDF.';
         }
     });
 </script>
